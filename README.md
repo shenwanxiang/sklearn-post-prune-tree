@@ -95,41 +95,41 @@ usage the fuction:
 Testing
 =======
 
-from sklearn.datasets import load_boston
-from sklearn.tree import tree_prune as tree
-import pydotplus
-from IPython.display import Image
-from copy import deepcopy
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.tree import tree_prune as tree
+    >>> import pydotplus
+    >>> from IPython.display import Image
+    >>> from copy import deepcopy
 
 
-#pre-prune
-boston = load_boston()
-clf = tree.DecisionTreeRegressor(max_depth=8)
-clf.fit(boston.data,boston.target)
-dot_data = tree.export_graphviz(clf,
-                                out_file=None,
-                                feature_names=boston.feature_names
-                                )
-graph = pydotplus.graph_from_dot_data(dot_data)
-Image(graph.create_png())
-tree.get_max_depth(clf)
+    >>> #pre-prune
+    >>> boston = load_boston()
+    >>> clf = tree.DecisionTreeRegressor(max_depth=8)
+    >>> clf.fit(boston.data,boston.target)
+    >>> dot_data = tree.export_graphviz(clf,
+    >>>                                 out_file=None,
+    >>>                                 feature_names=boston.feature_names
+    >>>                                 )
+    >>> graph = pydotplus.graph_from_dot_data(dot_data)
+    >>> Image(graph.create_png())
+    >>> tree.get_max_depth(clf)
 
 
-#post-prune
-clf = clf.prune(8)
-tree.get_max_depth(clf)
-dot_data = tree.export_graphviz(clf,out_file=None, feature_names=boston.feature_names)
-graph = pydotplus.graph_from_dot_data(dot_data)
-Image(graph.create_png())
+    >>> #post-prune
+    >>> clf = clf.prune(8)
+    >>> tree.get_max_depth(clf)
+    >>> dot_data = tree.export_graphviz(clf,out_file=None, feature_names=boston.feature_names)
+    >>> graph = pydotplus.graph_from_dot_data(dot_data)
+    >>> Image(graph.create_png())
 
 
 
-clf = tree.DecisionTreeRegressor(max_depth=8)
-clf.fit(boston.data,boston.target)
-clf1 = deepcopy(clf)
-tree.get_max_depth(clf1.prune(10))
+    >>> clf = tree.DecisionTreeRegressor(max_depth=8)
+    >>> clf.fit(boston.data,boston.target)
+    >>> clf1 = deepcopy(clf)
+    >>> tree.get_max_depth(clf1.prune(10))
 
 
-for i in range(200,0,-10):
-    clf1 = deepcopy(clf)
-    print(tree.get_max_depth(clf1.prune(i)))
+    >>> for i in range(200,0,-10):
+    >>>     clf1 = deepcopy(clf)
+    >>>     print(tree.get_max_depth(clf1.prune(i)))
