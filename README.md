@@ -19,11 +19,9 @@ Usage
 =======
 
 
-step1:    python _tree_prune.pyx
+step1:    python setup.py build
 
-step2:    python setup.py build
-
-setp3:    copy the files of _tree_prune.cpython-35m-x86_64-linux-gnu.so and tree_prune.py to /anaconda3/lib/python3.5/site-packages          /sklearn/tree
+setp2:    copy the files of _tree_prune.cpython-35m-x86_64-linux-gnu.so and tree_prune.py to /anaconda3/lib/python3.5/site-packages          /sklearn/tree
 
 
 
