@@ -1,0 +1,15 @@
+.ipynb_checkpoints
+__pycache__
+tmpignore
+*.gzip
+zip.ipynb
+
+
+# ignore the frames file that generate video
+frames 
+
+
+*/.ipynb_checkpoints/*
+*/__pycache__/*
+*/tempignore/*
+

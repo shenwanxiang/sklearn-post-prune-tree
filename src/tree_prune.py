@@ -1,15 +1,13 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
+
+Created on Tue Dec 19 11:01:33 2017
+
+@author: charleshen
+
 This module gathers prune tree-based methods, including decision, regression and
 randomized trees. Single and multi-output problems are both handled.
-
-XIAOHU add some new methods including: 
-
-1. prune(also in tree.c)
-2. prune_path(also in tree.c)
-3. get_max_depth
-4. get_n_leaves
-5. get_min_sample_leaf_split
-
 Created on Fri Aug 18 09:31:08 2017
 
 Prunes the tree to obtain the optimal subtree with n_leaves leaves.
@@ -18,9 +16,10 @@ more information please see:
 
 [1] J. Friedman and T. Hastie, "The elements of statistical learning", 2001, section 9.2.1
 
+Code is originally adapted from MILK: Machine Learning Toolkit(sklearn-0.18.0)
+
 """
-# Code is originally adapted from MILK: Machine Learning Toolkit(sklearn-0.18.0)
-# Author: charleshen
+
 
 
 from __future__ import division
@@ -31,16 +30,24 @@ from scipy.sparse import issparse
 from abc import ABCMeta, abstractmethod
 from warnings import warn
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..externals import six
-from ..externals.six.moves import xrange
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
+from sklearn.externals import six
+from sklearn.externals.six.moves import xrange
 #from ..feature_selection.selector_mixin import SelectorMixin
-from ..feature_selection.from_model import _LearntSelectorMixin
+#from sklearn.feature_selection.from_model import _LearntSelectorMixin
+#from sklearn.feature_selection.base import SelectorMixin
 
-from ..utils import check_array, check_random_state
+
+from sklearn.utils import check_array, check_random_state
 #from ..utils.validation import check_arrays
 
-from . import _tree_prune as _tree
+from base_tree import _tree_prune as _tree
+
+
+
+
+
+
 
 
 __all__ = ["DecisionTreeClassifier",
@@ -59,7 +66,12 @@ CLASSIFICATION = {
 REGRESSION = {
     "mse": _tree.MSE,
 }
- 
+
+
+
+
+
+
 def pruning_order(self, max_to_prune=None):
     """Compute the order for which the tree should be pruned.
 
@@ -166,7 +178,7 @@ def prune(self, n_leaves):
     return out_tree
 
 
-class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator, _LearntSelectorMixin)):
+class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
@@ -203,6 +215,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator, _LearntSelecto
         self.find_split_ = _tree.TREE_SPLIT_BEST
 
         self.tree_ = None
+
+
 
     # TODO: update this method if necessary after updating Tree class prune method
     def prune(self, n_leaves):
@@ -482,6 +496,55 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator, _LearntSelecto
 
             else:
                 return proba[:, :, 0]
+
+##########################new#################################
+    def apply(self, X, check_input=True):
+        from sklearn.utils.validation import check_is_fitted
+        """
+        Returns the index of the leaf that each sample is predicted as.
+        .. versionadded:: 0.17
+        Parameters
+        ----------
+        X : array_like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+        Returns
+        -------
+        X_leaves : array_like, shape = [n_samples,]
+            For each datapoint x in X, return the index of the leaf x
+            ends up in. Leaves are numbered within
+            ``[0; self.tree_.node_count)``, possibly with gaps in the
+            numbering.
+        """
+        check_is_fitted(self, 'tree_')
+        #X = self._validate_X_predict(X, check_input)
+        return self.tree_.apply(X)
+
+    def decision_path(self, X, check_input=True):
+        """Return the decision path in the tree
+        .. versionadded:: 0.18
+        Parameters
+        ----------
+        X : array_like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+        Returns
+        -------
+        indicator : sparse csr array, shape = [n_samples, n_nodes]
+            Return a node indicator matrix where non zero elements
+            indicates that the samples goes through the nodes.
+        """
+        X = self._validate_X_predict(X, check_input)
+        return self.tree_.decision_path(X)
+
 
     @property
     def feature_importances_(self):
@@ -902,10 +965,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
 
 
-
-#######################  BY XIAOHU ######################################
-def prune_path(clf, X, y, max_n_leaves=10, n_iterations=10,
-                          test_size=0.1, random_state=None):
+def prune_path(clf, X, y, max_n_leaves=10, n_iter=10,
+                          test_size=0.1, random_state=None, n_jobs=1):
     """Cross validation of scores for different values of the decision tree.
 
     This function allows to test what the optimal size of the post-pruned
@@ -926,7 +987,7 @@ def prune_path(clf, X, y, max_n_leaves=10, n_iterations=10,
     max_n_leaves : int, optional (default=10)
         maximum number of leaves of the tree to prune
 
-    n_iterations : int, optional (default=10)
+    n_iter : int, optional (default=10)
         Number of re-shuffling & splitting iterations.
 
     test_size : float (default=0.1) or int
@@ -936,38 +997,119 @@ def prune_path(clf, X, y, max_n_leaves=10, n_iterations=10,
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
+        
+    n_jobs : int or -1(default=1)
+        -1 mean using all cpu(thread) to run, 3 means using 3 cpus.    
 
     Returns
     -------
-    scores : list of list of floats
+    scores : list of list of floats,VIP: list may not equal lenght
         The scores of the computed cross validated trees grouped by tree size.
         scores[0] correspond to the values of trees of size max_n_leaves and
         scores[-1] to the tree with just two leaves.
 
     """
+    
 
-    from ..base import clone
-    from ..cross_validation import ShuffleSplit
+    from sklearn.base import clone
+    from sklearn.cross_validation import StratifiedShuffleSplit,ShuffleSplit
+    from sklearn.metrics import roc_auc_score,mean_squared_error
+    from multiprocessing.dummy import Pool as ThreadPool
+    from itertools import repeat
+    import pandas as pd
+    #import copy
+    
+    #classification score
+    def my_auc(estimator, X, y):
+        y_score = estimator.predict_proba(X)[:,1]  # You could also use the binary predict, but probabilities should give you a more realistic score.
+        return roc_auc_score(y, y_score)
+    
+    #regression score
+    def my_nmse(estimator, X, y):
+        y_pre = estimator.predict(X)  # You could also use the binary predict, but probabilities should give you a more realistic score.
+        return -mean_squared_error(y, y_pre)
+    
 
-    scores = list()
+    if len(np.unique(y)) == 2:        
+        scoring_fuc = my_auc
+        
+    else:
+        scoring_fuc = my_nmse
+     
+    def multip_run(fuction,task_zip,n_jobs = 1):
 
-    kf = ShuffleSplit(len(y), n_iterations, test_size,
-                      random_state=random_state)
-    for train, test in kf:
+        #Multi-process Run
+
+        pool = ThreadPool(processes=n_jobs)
+        results  = pool.starmap(fuction, task_zip)
+        pool.close()
+        pool.join()
+        return results 
+
+    def OneFoldCut(clf,X_train, y_train,X_test,y_test,max_n_leaves):
         estimator = clone(clf)
-        fitted = estimator.fit(X[train], y[train])
+            
+        fitted = estimator.fit(X_train, y_train)
+        
+        if max_n_leaves < get_n_leaves(fitted):
+            n_leaves = max_n_leaves
+        
+        else:
+            n_leaves = get_n_leaves(fitted)
+        
+        print('###### Iters true start leaves is %d #######' % n_leaves)
+                        
+        #cut_num = list(range(2,n_leaves, 1))
+        cut_num = list(range(n_leaves-1,1,-1))
+        #n = len(cut_num)
+        loc_indexs = []
+        loc_scores = []
+        for i in cut_num:
+            #clf1 = copy.deepcopy(fitted)
+            #clf1 = clone(fitted)
+            #clf1.prune(i)
+            fitted.prune(i)
+            onescore = scoring_fuc(fitted,X_test,y_test)
+            #onescore = scoring_fuc(clf1,X_test,y_test)
+            loc_scores.append(onescore)
+            loc_indexs.append(i)
+        
+        S = pd.DataFrame(loc_scores,index=loc_indexs)
 
-        loc_scores = list()
-        for i in range(max_n_leaves, 1, -1):
-            #We loop from the bigger values to the smaller ones in order to be
-            #able to compute the original tree once, and then make it smaller
+        return S
 
-            fitted.prune(n_leaves=i)
-            loc_scores.append(fitted.score(X[test], y[test]))
 
-        scores.append(loc_scores)
+    #scores = list()
+    if len(np.unique(y)) == 2:            
+        kf = StratifiedShuffleSplit(y,
+                                    n_iter = n_iter, 
+                                    test_size= test_size,
+                                    random_state=random_state)
+    else:
+        kf = ShuffleSplit(len(y),
+                        n_iter = n_iter, 
+                        test_size= test_size,
+                        random_state=random_state)
+    
+    X_trains = [X[tr] for tr,ts in kf]
+    y_trains = [y[tr] for tr,ts in kf]
+    
+    X_tests = [X[ts] for tr,ts in kf]
+    y_tests = [y[ts] for tr,ts in kf]
+    
+    task_zip = zip(repeat(clf),
+                   X_trains,
+                   y_trains,
+                   X_tests,
+                   y_tests,
+                   repeat(max_n_leaves))
+    
+    scores = multip_run(OneFoldCut,task_zip,n_jobs = n_jobs)
+    
+    df = pd.concat(scores,axis=1)
+    df.columns = range(len(df.columns))
 
-    return zip(*scores)
+    return df #zip(*scores)
 
 
 
@@ -1023,15 +1165,14 @@ def get_min_sample_leaf_split(clf):
     return s[leaves_nodes].min(), s[father_nodes].min()
 
 
-
 ############################# EXPORT ############################################
-import numpy as np
+
 import warnings
 
-from ..externals import six
+from sklearn.externals import six
 
-from . import _criterion
-from . import _tree_prune as _tree
+from sklearn.tree import _criterion
+
 
 
 
@@ -1081,7 +1222,6 @@ class Sentinel(object):
     def __repr__():
         return '"tree.dot"'
 SENTINEL = Sentinel()
-
 
 
 def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
@@ -1431,4 +1571,7 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
     finally:
         if own_file:
             out_file.close()
+
+
+
 

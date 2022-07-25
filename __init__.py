@@ -3,13 +3,11 @@ The :mod:`sklearn.tree` module includes decision tree-based models for
 classification and regression.
 """
 
-from .tree import DecisionTreeClassifier
-from .tree import DecisionTreeRegressor
-from .tree import ExtraTreeClassifier
-from .tree import ExtraTreeRegressor
-from .export import export_graphviz
-from .tree import prune_path
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import ExtraTreeClassifier
+from sklearn.tree import ExtraTreeRegressor
+from sklearn.tree import export_graphviz
 
 __all__ = ["DecisionTreeClassifier", "DecisionTreeRegressor",
-           "ExtraTreeClassifier", "ExtraTreeRegressor", "export_graphviz", "prune_path"]
-
+           "ExtraTreeClassifier", "ExtraTreeRegressor", "export_graphviz"]
