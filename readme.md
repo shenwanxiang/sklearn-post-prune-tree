@@ -5,7 +5,7 @@ Prunes the tree to obtain the optimal subtree with n_leaves leaves
 
 
 
-Usage
+## Usage
 =======
 
 step0: cd ./src
@@ -18,15 +18,20 @@ setp3: copy the files of _tree_prune.cpython-35m-x86_64-linux-gnu.so and tree_pr
 
 
 
-Pruning
+## Pruning
 =======
 
-Comparison of pre & post pruning of the tree:
-![pre-prune](./docs/pre-prune.png)
-![pre-prune](./docs/post-prune.png)
+### Comparison of pre & post-pruning of the tree:
 
 Pruning by the best leaf nodes in the cross-validations:
 ![pre-prune](./docs/df_train.csv_both.png)
+
+Pre-pruning Tree:
+![pre-prune](./docs/pre-prune.png)
+
+Post-pruning Tree:
+![pre-prune](./docs/post-prune.png)
+
 
 
 
